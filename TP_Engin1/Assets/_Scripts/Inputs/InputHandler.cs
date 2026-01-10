@@ -4,35 +4,60 @@ using UnityEngine.InputSystem;
 
 public class InputHandler : MonoBehaviour
 {
-   public event Action<Vector2> OnMove;
+   public event Action<float> OnMove;
    public event Action OnJump;
+   public event Action OnClick;
 
-   private PlayerInput _inputs;
+   [SerializeField] private PlayerInput _inputs;
 
-   private static readonly Lazy<InputHandler> _instance = new Lazy<InputHandler>(() => new InputHandler());
-
-   public static InputHandler Instance => _instance.Value;
+   public static InputHandler Instance;
 
    private void Awake()
    {
-      _inputs = GetComponent<PlayerInput>();
+      InitInputHandler();
+   }
+
+   private void InitInputHandler()
+   {
+      if (Instance && Instance != this)
+         Destroy(gameObject);
+      Instance = this;
+      DontDestroyOnLoad(gameObject);
    }
 
    private void OnEnable()
    {
-      _inputs.actions["Move"].performed += OnMoveInput;
-      _inputs.actions["Move"].canceled += OnMoveInput;
+      _inputs.actions["MoveHorizontal"].performed += OnMoveInput;
+      _inputs.actions["MoveHorizontal"].canceled += OnMoveInput;
 
-      _inputs.actions["Move"].performed += OnJumpInput;
+      _inputs.actions["Jump"].performed += OnJumpInput;
+
+      _inputs.actions["Click"].performed += OnClickInput;
+   }
+   
+   
+   private void OnDisable()
+   {
+      _inputs.actions["MoveHorizontal"].performed -= OnMoveInput;
+      _inputs.actions["MoveHorizontal"].canceled -= OnMoveInput;
+
+      _inputs.actions["Jump"].performed -= OnJumpInput;
+
+      _inputs.actions["Click"].performed -= OnClickInput;
    }
 
    private void OnMoveInput(InputAction.CallbackContext ctx)
    {
-      OnMove?.Invoke(ctx.ReadValue<Vector2>());
+      OnMove?.Invoke(ctx.ReadValue<float>());
    }
    
    private void OnJumpInput(InputAction.CallbackContext ctx)
    {
       OnJump?.Invoke();
+   }
+   
+   private void OnClickInput(InputAction.CallbackContext ctx)
+   {
+      OnClick?.Invoke();
    }
 }
